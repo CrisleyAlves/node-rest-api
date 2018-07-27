@@ -1,16 +1,29 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-
 const Product = require("../models/product");
 
 router.get("/", (req, res, next)=>{
 
     Product.find()
+    .select("_id name price")
     .exec()
     .then(docs =>{
-        console.log(docs);
-        res.status(200).json(docs);
+        const response = {
+            count: docs.length,
+            products: docs.map(doc =>{
+                return{
+                    _id: doc.id,
+                    name: doc.name,
+                    price: doc.price,
+                    request: {
+                        type: 'GET',
+                        url: process.env.PROJECT_SERVER_PATH+'/products/'+doc.id
+                    }
+                }
+            })
+        }
+        res.status(200).json(response);
     })
     .catch(err =>{
         console.log(err);
@@ -27,9 +40,17 @@ router.post("/", (req, res, next)=>{
         price: req.body.price
     });
     product.save().then(result => {
-        res.status(200).json({
-            message: 'POST Request',
-            createdProduct: result
+        res.status(201).json({
+            message: 'Produto criado com sucesso',
+            createdProduct: {
+                _id: result.id,
+                name: result.name,
+                price: result.price,
+                request: {
+                    type: 'GET',
+                    url: process.env.PROJECT_SERVER_PATH+'/products/'+result.id
+                }
+            }
         });
     }).catch(err => {
         console.log(err);
@@ -42,10 +63,18 @@ router.post("/", (req, res, next)=>{
 router.get("/:productId", (req, res, next)=>{
     const id = req.params.productId;
     Product.findById(id)
+    .select('_id name price')
     .exec()
     .then( doc => {
         if(doc){
-            res.status(200).json(doc);
+            res.status(200).json({
+                message: "Informações do produto",
+                product: {
+                    _id: doc.id,
+                    name: doc.name,
+                    price: doc.price
+                }
+            });
         }else{
             res.status(404).json({
                 message: "O ID informado não existe na nossa base de dados"
@@ -59,7 +88,6 @@ router.get("/:productId", (req, res, next)=>{
 
 router.patch("/:productId", (req, res, next)=>{
     const id = req.params.productId;
-
     const updateAttr = {};
 
     for(const attr of req.body){
@@ -69,8 +97,13 @@ router.patch("/:productId", (req, res, next)=>{
     Product.update({_id: id}, { $set : updateAttr })
     .exec()
     .then(result =>{
-        console.log(result);
-        res.status(200).json({result})
+        res.status(200).json({
+                message: 'Produto atualizado com sucesso',
+                request: {
+                    type: 'GET',
+                    url: process.env.PROJECT_SERVER_PATH+'/products/'+id
+                }       
+            });
     })
     .catch(err =>{
         console.log(err);
@@ -86,7 +119,9 @@ router.delete("/:productId", (req, res, next)=>{
     Product.remove({ _id: id })
     .exec()
     .then( result => {
-        res.status(200).json(result);
+        res.status(200).json({
+            message: "Produto excluído com sucesso"
+        });
     })
     .catch( err => {
         console.log(err);

@@ -2,16 +2,24 @@ const express = require("express");
 const app = express();
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
 
 //Arquivo que armazena as rotas
 const productRoutes = require("./api/routes/products");
 const orderRoutes = require("./api/routes/order");
+
+//Conexão com banco de dados MongoDB
+mongoose.connect(
+    process.env.MONGO_PATH,
+    {useNewUrlParser: true}
+);
 
 // log da requisição no console
 app.use(morgan("dev"));
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
+//Configuração do CORS
 app.use((req, res, next)=>{
     res.header("Access-Control-Allow-Origin", "*");
     res.header(

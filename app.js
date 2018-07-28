@@ -34,7 +34,7 @@ app.use((req, res, next)=>{
 
 //para a rota X, utilize as informações desta variável
 app.use('/products', productRoutes);
-app.use('/order', orderRoutes);
+app.use('/orders', orderRoutes);
 
 //se chegar até aqui é porque a rota não existe
 app.use((req, res, next)=>{

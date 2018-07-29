@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 //Arquivo que armazena as rotas
 const productRoutes = require("./api/routes/products");
 const orderRoutes = require("./api/routes/order");
+const userRoutes = require("./api/routes/users");
 
 //Conexão com banco de dados MongoDB
 mongoose.connect(
@@ -36,6 +37,7 @@ app.use((req, res, next)=>{
 //para a rota X, utilize as informações desta variável
 app.use('/products', productRoutes);
 app.use('/orders', orderRoutes);
+app.use('/users', userRoutes);
 
 //se chegar até aqui é porque a rota não existe
 app.use((req, res, next)=>{

@@ -2,11 +2,40 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const Product = require("../models/product");
+const multer = require("multer");
+
+//sempre quando uma nova imagem for ser salva, as funções serão executadas
+const storage = multer.diskStorage({
+    destination: function(req, file, cb){
+        cb(null, './uploads/') //cb -> callback
+    },
+    filename: function(req, file, cb){
+        cb(null, file.originalname); //cb -> callback
+    }
+})
+
+const fileFilter = (req, file, cb) =>{    
+    //salva o arquivo
+    if( file.mimetype === 'image/jpeg' || file.mimetype === 'image/png'){
+        cb(null, true);
+    }else{
+        // ignora o arquivo e não salva
+        cb(null, false);
+    }    
+}
+
+const upload = multer({ 
+    storage: storage, 
+    limits: {
+        fileSize: 1024 * 1024 * 2 // até 2 MB
+    },
+    fileFilter: fileFilter
+});
 
 router.get("/", (req, res, next)=>{
 
     Product.find()
-    .select("_id name price")
+    .select("_id name price image")
     .exec()
     .then(docs =>{
         const response = {
@@ -16,6 +45,7 @@ router.get("/", (req, res, next)=>{
                     _id: doc.id,
                     name: doc.name,
                     price: doc.price,
+                    image: doc.image,
                     request: {
                         type: 'GET',
                         url: process.env.PROJECT_SERVER_PATH+'/products/'+doc.id
@@ -33,11 +63,15 @@ router.get("/", (req, res, next)=>{
     })
 });
 
-router.post("/", (req, res, next)=>{
+router.post("/", upload.single('image'), (req, res, next)=>{
+    
+    console.log(req.file)
+
     const product = new Product({
         _id: mongoose.Types.ObjectId(),
         name: req.body.name,
-        price: req.body.price
+        price: req.body.price,
+        image: req.file.path
     });
     product.save().then(result => {
         res.status(201).json({
@@ -63,7 +97,7 @@ router.post("/", (req, res, next)=>{
 router.get("/:productId", (req, res, next)=>{
     const id = req.params.productId;
     Product.findById(id)
-    .select('_id name price')
+    .select('_id name price image')
     .exec()
     .then( doc => {
         if(doc){

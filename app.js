@@ -16,6 +16,7 @@ mongoose.connect(
 
 // log da requisição no console
 app.use(morgan("dev"));
+app.use('/uploads', express.static("uploads")) // quando a rota for X, permita acesso a pasta de uploads
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 

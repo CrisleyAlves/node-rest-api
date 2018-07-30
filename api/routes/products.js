@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const Product = require("../models/product");
 const multer = require("multer");
+const checkAuth = require("../jwt/check-auth");
 
 //sempre quando uma nova imagem for ser salva, as funções serão executadas
 const storage = multer.diskStorage({
@@ -63,7 +64,7 @@ router.get("/", (req, res, next)=>{
     })
 });
 
-router.post("/", upload.single('image'), (req, res, next)=>{
+router.post("/", checkAuth, upload.single('image'), (req, res, next)=>{
     
     console.log(req.file)
 
@@ -120,7 +121,7 @@ router.get("/:productId", (req, res, next)=>{
     });
 });
 
-router.patch("/:productId", (req, res, next)=>{
+router.patch("/:productId", checkAuth, (req, res, next)=>{
     const id = req.params.productId;
     const updateAttr = {};
 
@@ -147,7 +148,7 @@ router.patch("/:productId", (req, res, next)=>{
     });
 });
 
-router.delete("/:productId", (req, res, next)=>{
+router.delete("/:productId", checkAuth, (req, res, next)=>{
     const id = req.params.productId;
 
     Product.remove({ _id: id })

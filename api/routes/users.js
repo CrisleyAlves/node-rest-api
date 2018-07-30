@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const User = require('../models/user');
 const Bcript = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 router.get("/", (req, res, next)=>{
     User.find()
@@ -77,6 +78,56 @@ router.post('/signup', (req, res, next) => {
         })
     });    
 })
+
+router.post("/login", (req, res, next)=>{
+    User.find( {email: req.body.email} )
+    .exec()
+    .then( user => {
+        //caso não tenha nenhum usuário com o email informado
+        if(user.length === 0){
+            res.status(401).json({
+                message: "A autenticação falhou",
+                error: err
+            });
+        }
+        
+        //compara a senha enviada com a senha no banco
+        //Bcript função da própria biblioteca que realiza comparação
+        Bcript.compare(req.body.password, user[0].password, (err, result) =>{
+            //result retorna verdadeiro ou false
+            if(!result){
+                res.status(401).json({
+                    message: "A autenticação falhou",
+                    error: err
+                });
+            }else{
+                
+                //  1º parâmetro -> vai ser gerado um token para validação com base neste primeiro objeto(id, email)
+                //  2º parâmetro -> JWT_SECRET_KEY -> chave secreta do servidor para geração do token
+                //  3º parâmetro -> Período que a chave será válida
+                const token = jwt.sign({
+                    id: user[0]._id,
+                    email: user[0].email
+                },
+                process.env.JWT_SECRET_KEY,
+                {
+                    expiresIn: '1h'
+                });
+
+                res.status(200).json({
+                    message: "Login realizado com sucesso",
+                    token: token
+                })
+            }
+        })
+    })
+    .catch(err => {
+        res.status(500).json({
+            message: "A autenticação falhou",
+            error: err
+        })
+    })
+});
 
 router.delete("/:userId", (req, res, next)=>{
     const id = req.params.productId;
